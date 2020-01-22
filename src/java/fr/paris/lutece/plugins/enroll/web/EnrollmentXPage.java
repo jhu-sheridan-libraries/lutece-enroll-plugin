@@ -2,19 +2,13 @@ package fr.paris.lutece.plugins.enroll.web;
 
 import fr.paris.lutece.plugins.enroll.business.enrollment.Enrollment;
 import fr.paris.lutece.plugins.enroll.business.enrollment.EnrollmentHome;
-import fr.paris.lutece.plugins.enroll.business.Project;
-import fr.paris.lutece.plugins.enroll.business.ProjectHome;
-import fr.paris.lutece.portal.service.message.AdminMessage;
-import fr.paris.lutece.portal.service.message.AdminMessageService;
+import fr.paris.lutece.plugins.enroll.business.project.Project;
+import fr.paris.lutece.plugins.enroll.business.project.ProjectHome;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.web.xpages.XPage;
 import fr.paris.lutece.portal.util.mvc.xpage.MVCApplication;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.portal.util.mvc.xpage.annotations.Controller;
-import fr.paris.lutece.util.url.UrlItem;
-import fr.paris.lutece.portal.service.message.SiteMessageService;
-import fr.paris.lutece.portal.service.message.SiteMessage;
-import fr.paris.lutece.portal.service.message.SiteMessageException;
 
 import java.util.Map;
 import java.util.List;
@@ -142,10 +136,55 @@ public class EnrollmentXPage extends MVCApplication {
             refListProjects.addItem( project.getId( ), project.getName( ) );
           }
       }
-      Map<String, Object> model = new HashMap<String, Object>( );
+      Map<String, Object> model = new HashMap<>( );
       model.put( MARK_LIST_PROJECTS, refListProjects );
 
       HtmlTemplate template = AppTemplateService.getTemplate( TEMPLATE_CREATE_ENROLLMENT, locale, model );
       return template.getHtml( );
   }
+
+    /**
+     * Returns the form to update info about an enrollment
+     *
+     * @param request The Http request
+     * @return The HTML form to update info
+     */
+    @View( VIEW_MODIFY_ENROLLMENT )
+    public XPage getModifyEnrollment( HttpServletRequest request )
+    {
+        int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_ENROLLMENT ) );
+
+        if ( _enrollment == null  || ( _enrollment.getId( ) != nId ))
+        {
+            _enrollment = EnrollmentHome.findByPrimaryKey( nId );
+        }
+
+        Map<String, Object> model = getModel(  );
+        model.put( MARK_ENROLLMENT, _enrollment );
+
+        return getXPage( TEMPLATE_MODIFY_ENROLLMENT, request.getLocale(  ), model );
+    }
+
+    /**
+     * Process the change form of an enrollment
+     *
+     * @param request The Http request
+     * @return The Jsp URL of the process result
+     */
+    @Action( ACTION_MODIFY_ENROLLMENT )
+    public XPage doModifyEnrollment( HttpServletRequest request )
+    {
+        populate( _enrollment, request );
+
+        // Check constraints
+        if ( !validateBean( _enrollment, getLocale( request ) ) )
+        {
+            return redirect( request, VIEW_MODIFY_ENROLLMENT, PARAMETER_ID_ENROLLMENT, _enrollment.getId( ) );
+        }
+
+        EnrollmentHome.update( _enrollment );
+        addInfo( INFO_ENROLLMENT_UPDATED, getLocale( request ) );
+
+        return redirectView( request, VIEW_MANAGE_ENROLLMENTS );
+    }
 }
