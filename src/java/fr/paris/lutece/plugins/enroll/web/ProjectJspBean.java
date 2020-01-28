@@ -200,6 +200,8 @@ public class ProjectJspBean extends ManageEnrollJspBean
         Map<String, Object> model = getModel(  );
         model.put( PARAMETER_EMAILS , result );
 
+        addInfo(INFO_EMAILS_COPIED, getLocale());
+
         return getPage( " ", TEMPLATE_EMAIL_ALL, model );
     }
 
@@ -330,5 +332,11 @@ public class ProjectJspBean extends ManageEnrollJspBean
         addInfo( INFO_PROJECT_UPDATED, getLocale(  ) );
 
         return redirectView( request, VIEW_MANAGE_PROJECTS );
+    }
+
+    // override here changes access, allows us to mock this method in tests
+    @Override
+    protected String redirectView( HttpServletRequest request, String strView ) {
+        return super.redirectView( request, strView );
     }
 }
