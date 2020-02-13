@@ -7,7 +7,6 @@ import fr.paris.lutece.plugins.enroll.business.project.ProjectHome;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.web.xpages.XPage;
 import fr.paris.lutece.portal.util.mvc.xpage.MVCApplication;
-import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.portal.util.mvc.xpage.annotations.Controller;
 
 import java.util.Map;
@@ -24,51 +23,20 @@ import fr.paris.lutece.portal.service.template.AppTemplateService;
 public class EnrollmentXPage extends MVCApplication {
 
   private static final String TEMPLATE_CREATE_ENROLLMENT="/skin/plugins/enroll/create_enrollment.html";
-  private static final String TEMPLATE_ENROLLMENT_CREATED="/skin/plugins/enroll/enrollment_created.html";
-  private static final String TEMPLATE_ENROLLMENT_FAILED="/skin/plugins/enroll/enrollment_failed.html";
+  private static final String TEMPLATE_ENROLLMENT_RESULT="skin/plugins/enroll/enrollment_result.html";
 
   // Parameters
   private static final String MARK_ENROLLMENT = "enrollment";
   private static final String MARK_LIST_PROJECTS = "refListProjects";
 
   private static final String VIEW_CREATE_ENROLLMENT = "createEnrollment";
-
   private static final String ACTION_CREATE_ENROLLMENT = "createEnrollment";
-  private static final String INFO_ENROLLMENT_CREATED = "enroll.info.enrollment.createdModify";
-  private static final String INFO_ENROLLMENT_FAILED =  "enroll.info.enrollment.createFailed";
-
 
   private Enrollment _enrollment;
 
-  @View( VIEW_CREATE_ENROLLMENT )
-  public XPage getCreateEnrollment( HttpServletRequest request )
-  {
-      if (_enrollment == null) {
-        _enrollment = new Enrollment();
-      }
-
-      Map<String, Object> model = getModel(  );
-      model.put( MARK_ENROLLMENT, _enrollment );
-      Collection<Project> listProjects = ProjectHome.getProjectsList( );
-      ReferenceList refListProjects = new ReferenceList( );
-      for ( Project project : listProjects )
-      {
-          if (project.getActive() == 1) {
-            refListProjects.addItem( project.getId( ), project.getName( ) );
-          }
-      }
-      model.put( MARK_LIST_PROJECTS, refListProjects );
-
-      System.out.println("MOOOOO" + refListProjects.size());
-
-      return getXPage( TEMPLATE_CREATE_ENROLLMENT, request.getLocale(  ), model );
-  }
-
   @Action( ACTION_CREATE_ENROLLMENT )
-  public XPage doCreateEnrollment( HttpServletRequest request )
-  {
+  public XPage doCreateEnrollment( HttpServletRequest request )  {
       _enrollment = new Enrollment(  );
-
       populate( _enrollment, request );
 
       // Check constraints
@@ -77,28 +45,24 @@ public class EnrollmentXPage extends MVCApplication {
           return redirectView( request, VIEW_CREATE_ENROLLMENT );
       }
 
-      EnrollmentHome.create( _enrollment );
-
+      Map<String, Object> model = getModel();
       List<Project> listProjects = ProjectHome.getProjectsList();
+
       for (Project project : listProjects) {
-        if (project.getName().equals(_enrollment.getProgram())) {
-            if (project.getSize() > 0) {
-                if (project.getCurrentSize() >= project.getSize() && project.getActive() == 1) {
-                    project.setActive(0);
-                }
-            }
-            if (project.getActive() == 1 ) {
-                project.setCurrentSize(project.getCurrentSize() + 1);
-                ProjectHome.update(project);
-                addInfo( INFO_ENROLLMENT_CREATED, getLocale( request ) );
-                Map<String, Object> model = getModel(  );
-                return getXPage( TEMPLATE_ENROLLMENT_CREATED, request.getLocale(  ), model );
-            }
-        }
+          if (project.getName().equals(_enrollment.getProgram())) {
+              if ( project.canAdd() ) {
+                    EnrollmentHome.create(_enrollment);
+                    project.setCurrentSize(project.getCurrentSize() + 1);
+                    ProjectHome.update(project);
+                    model.put("success", true);
+                } else {
+                    model.put("inactive", project.getActive()==0);
+                    model.put( "full", project.atCapacity());
+              }
+              break;
+          }
       }
-      addInfo(INFO_ENROLLMENT_FAILED, getLocale( request ) );
-      Map<String, Object> model = getModel(  );
-      return getXPage( TEMPLATE_ENROLLMENT_FAILED, request.getLocale(), model);
+      return getXPage( TEMPLATE_ENROLLMENT_RESULT, request.getLocale(), model);
   }
 
   /**
@@ -116,7 +80,7 @@ public class EnrollmentXPage extends MVCApplication {
       ReferenceList refListProjects = new ReferenceList( );
       for ( Project project : listProjects )
       {
-          if (project.getActive() == 1) {
+          if (project.canAdd() ) {
             refListProjects.addItem( project.getId( ), project.getName( ) );
           }
       }
