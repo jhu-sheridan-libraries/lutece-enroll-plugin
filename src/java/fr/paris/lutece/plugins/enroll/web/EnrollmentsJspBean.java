@@ -6,22 +6,15 @@ import fr.paris.lutece.plugins.enroll.business.project.Project;
 import fr.paris.lutece.plugins.enroll.business.project.ProjectHome;
 import fr.paris.lutece.portal.service.message.AdminMessage;
 import fr.paris.lutece.portal.service.message.AdminMessageService;
-import fr.paris.lutece.portal.service.template.AppTemplateService;
 import fr.paris.lutece.portal.util.mvc.admin.annotations.Controller;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
-import fr.paris.lutece.util.html.HtmlTemplate;
 import fr.paris.lutece.util.url.UrlItem;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
-import fr.paris.lutece.util.ReferenceList;
-
-import java.util.Locale;
-import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class provides the user interface to manage Enrollment features ( manage, create, modify, remove )
@@ -146,47 +139,52 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
     @Action( ACTION_REMOVE_ENROLLMENT )
     public String doRemoveEnrollment( HttpServletRequest request )
     {
-        int nId = Integer.parseInt( request.getParameter( PARAMETER_ID_ENROLLMENT ) );
-        int projectId = Integer.parseInt( request.getParameter( PARAMETER_ID_PROJECT ) );
+        _enrollment = new Enrollment();
+        populate(_enrollment, request);
+        boolean found = false;
+
+        //Look for the enrollment in the list of enrollments, flag if found
         List<Enrollment> listEnroll = EnrollmentHome.getEnrollmentsList();
         for (Enrollment enroll : listEnroll) {
-          if (enroll.getId() == nId) {
-            _enrollment = enroll;
-            break;
-          }
+            if (enroll.getId() == _enrollment.getId()) {
+                found = true;
+                break;
+            }
         }
 
-        List<Project> listProjects = ProjectHome.getProjectsList();
-        for (Project project : listProjects) {
-          if ((project.getName()).equals(_enrollment.getProgram())) {
-            project.setCurrentSize(project.getCurrentSize()-1);
-            ProjectHome.update(project);
-            break;
-          }
-        }
+        if (found) {
+            //update the project size the enrollment belongs to
+            int projectId = 0;
+            List<Project> listProjects = ProjectHome.getProjectsList();
+            for (Project project : listProjects) {
+                if (project.getName().equals(_enrollment.getProgram())) {
+                    projectId = project.getId();
+                    project.setCurrentSize(project.getCurrentSize() - 1);
+                    ProjectHome.update(project);
+                    break;
+                }
+            }
 
-        EnrollmentHome.remove( nId );
+            //remove the enrollment from the enrollment list
+            EnrollmentHome.remove(_enrollment.getId());
 
-        addInfo( INFO_ENROLLMENT_REMOVED, getLocale(  ) );
+            addInfo( INFO_ENROLLMENT_REMOVED, getLocale());
 
-        String _projectName = "";
-        listProjects = ProjectHome.getProjectsList();
-        for (Project project : listProjects) {
-          if (project.getId() == projectId) {
-            _projectName = project.getName();
-            break;
-          }
+            List<Enrollment> sortedEnrollments = new ArrayList<>();
+            listEnroll = EnrollmentHome.getEnrollmentsList();
+            for (Enrollment enrollment : listEnroll) {
+                if (enrollment.getProgram().equals(_enrollment.getProgram())) {
+                    sortedEnrollments.add(enrollment);
+                }
+            }
+
+            Map<String, Object> model = getPaginatedListModel( request, MARK_ENROLLMENT_LIST, sortedEnrollments, JSP_MANAGE_ENROLLMENTS );
+            model.put( MARK_PROJECT, projectId);
+            return getPage( PROPERTY_PAGE_TITLE_MANAGE_ENROLLMENTS, TEMPLATE_MANAGE_ENROLLMENTS, model );
+        } else {
+            Map<String, Object> model = getPaginatedListModel( request, MARK_ENROLLMENT_LIST, listEnroll, JSP_MANAGE_ENROLLMENTS);
+            return getPage( PROPERTY_PAGE_TITLE_MANAGE_ENROLLMENTS, TEMPLATE_MANAGE_ENROLLMENTS, model );
         }
-        List<Enrollment> listEnrollments = EnrollmentHome.getEnrollmentsList(  );
-        List<Enrollment> sortedEnrollments = new ArrayList<>();
-        for (Enrollment enrollment : listEnrollments) {
-          if (enrollment.getProgram().equals(_projectName)) {
-            sortedEnrollments.add(enrollment);
-          }
-        }
-        Map<String, Object> model = getPaginatedListModel( request, MARK_ENROLLMENT_LIST, sortedEnrollments, JSP_MANAGE_ENROLLMENTS );
-        model.put( MARK_PROJECT, projectId);
-        return getPage( PROPERTY_PAGE_TITLE_MANAGE_ENROLLMENTS, TEMPLATE_MANAGE_ENROLLMENTS, model );
     }
 
     /**
