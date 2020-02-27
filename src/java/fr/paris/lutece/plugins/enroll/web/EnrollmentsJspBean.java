@@ -11,8 +11,6 @@ import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.util.url.UrlItem;
 
-import java.util.List;
-
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,9 +22,8 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
 {
     // Template
     private static final String TEMPLATE_MANAGE_ENROLLMENTS="/admin/plugins/enroll/manage_enrollments.html";
-    private static final String TEMPLATE_CREATE_ENROLLMENT="/skin/plugins/enroll/create_enrollment.html";
     private static final String TEMPLATE_MODIFY_ENROLLMENT="/admin/plugins/enroll/modify_enrollment.html";
-    private static final String TEMPLATE_ADD_ENROLLMENT_TO_PROJECT="/admin/plugins/enroll/create_enrollment.html";
+    private static final String TEMPLATE_ADD_ENROLLMENT_TO_PROJECT="/admin/plugins/enroll/add_enrollment_to_project.html";
 
     // Parameters
     protected static final String PARAMETER_ID_ENROLLMENT = "id";
@@ -46,7 +43,6 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
     private static final String MARK_ENROLLMENT_LIST = "enrollment_list";
     private static final String MARK_ENROLLMENT = "enrollment";
     private static final String MARK_PROJECT = "project";
-    private static final String MARK_LIST_PROJECTS = "refListProjects";
 
     private static final String JSP_MANAGE_ENROLLMENTS = "jsp/admin/plugins/enroll/ManageEnroll.jsp";
 
