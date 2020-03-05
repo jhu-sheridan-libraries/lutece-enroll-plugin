@@ -13,7 +13,6 @@ import fr.paris.lutece.util.url.UrlItem;
 
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
 
 /**
  * This class provides the user interface to manage Enrollment features ( manage, create, modify, remove )
@@ -238,7 +237,7 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
         if ( project.canAdd()) {
             project.setCurrentSize(project.getCurrentSize() + 1);
             ProjectHome.update(project);
-            EnrollmentHome.create(_enrollment);
+            EnrollmentHome.create(enrollment);
             addInfo(INFO_ENROLLMENT_CREATED, getLocale());
             addInfo(INFO_PROJECT_UPDATED, getLocale());
             } else {
