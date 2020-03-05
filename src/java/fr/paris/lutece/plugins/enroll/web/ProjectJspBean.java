@@ -44,10 +44,10 @@ public class ProjectJspBean extends ManageEnrollJspBean
     private static final String PROPERTY_PAGE_TITLE_CREATE_PROJECT = "enroll.create_project.pageTitle";
 
     // Markers
-    private static final String MARK_PROJECT_LIST = "project_list";
-    private static final String MARK_PROJECT = "project";
+    protected static final String MARK_PROJECT_LIST = "project_list";
+    protected static final String MARK_PROJECT = "project";
 
-    private static final String JSP_MANAGE_PROJECTS = "jsp/admin/plugins/enroll/ManageProjects.jsp";
+    protected static final String JSP_MANAGE_PROJECTS = "jsp/admin/plugins/enroll/ManageProjects.jsp";
 
     // Properties
     private static final String MESSAGE_CONFIRM_REMOVE_PROJECT = "enroll.message.confirmRemoveProject";
@@ -72,7 +72,6 @@ public class ProjectJspBean extends ManageEnrollJspBean
     private static final String INFO_PROJECT_CREATED = "enroll.info.project.created";
     private static final String INFO_PROJECT_UPDATED = "enroll.info.project.updated";
     private static final String INFO_PROJECT_REMOVED = "enroll.info.project.removed";
-    private static final String INFO_INCREASE_SIZE = "enroll.info.project.increase";
     private static final String INFO_SIZE_IS_SMALL = "enroll.info.project.sizesmall";
     private static final String INFO_PROJECT_SAME_NAME = "enroll.info.project.samename";
     private static final String INFO_EMAILS_COPIED = "enroll.info.project.emailscopied";
@@ -83,7 +82,7 @@ public class ProjectJspBean extends ManageEnrollJspBean
      * @return The page
      */
     @View( value = VIEW_MANAGE_PROJECTS, defaultView = true )
-    public String getManageProjects( HttpServletRequest request )
+    public String getManageProjects(HttpServletRequest request)
     {
         List<Project> listProjects = ProjectHome.getProjectsList(  );
         Map<String, Object> model = getPaginatedListModel( request, MARK_PROJECT_LIST, listProjects, JSP_MANAGE_PROJECTS );
@@ -146,12 +145,6 @@ public class ProjectJspBean extends ManageEnrollJspBean
         Project project = ProjectHome.findByPrimaryKey( nIdProject );
 
         if ( project != null ) {
-
-            if (project.getActive() == 0 && !project.hasRoom()) {
-                addInfo(INFO_INCREASE_SIZE, getLocale());
-                return redirectView(request, VIEW_MANAGE_PROJECTS);
-            }
-
             project.flipActive();
             ProjectHome.update(project);
         }

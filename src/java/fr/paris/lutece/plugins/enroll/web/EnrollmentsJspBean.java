@@ -11,6 +11,7 @@ import fr.paris.lutece.portal.util.mvc.commons.annotations.Action;
 import fr.paris.lutece.portal.util.mvc.commons.annotations.View;
 import fr.paris.lutece.util.url.UrlItem;
 
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -22,7 +23,6 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
 {
     // Template
     private static final String TEMPLATE_MANAGE_ENROLLMENTS="/admin/plugins/enroll/manage_enrollments.html";
-    private static final String TEMPLATE_CREATE_ENROLLMENT="/skin/plugins/enroll/create_enrollment.html";
     private static final String TEMPLATE_MODIFY_ENROLLMENT="/admin/plugins/enroll/modify_enrollment.html";
     private static final String TEMPLATE_ADD_ENROLLMENT_TO_PROJECT="/admin/plugins/enroll/add_enrollment_to_project.html";
 
@@ -44,7 +44,6 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
     private static final String MARK_ENROLLMENT_LIST = "enrollment_list";
     private static final String MARK_ENROLLMENT = "enrollment";
     private static final String MARK_PROJECT = "project";
-    private static final String MARK_LIST_PROJECTS = "refListProjects";
 
     private static final String JSP_MANAGE_ENROLLMENTS = "jsp/admin/plugins/enroll/ManageEnroll.jsp";
 
@@ -237,11 +236,11 @@ public class EnrollmentsJspBean extends ManageEnrollJspBean
 
         //add enrollment if the project is active and has room
         if ( project.canAdd()) {
-                EnrollmentHome.create(enrollment);
-                project.setCurrentSize(project.getCurrentSize() + 1);
-                ProjectHome.update(project);
-                addInfo(INFO_ENROLLMENT_CREATED, getLocale());
-                addInfo(INFO_PROJECT_UPDATED, getLocale());
+            project.setCurrentSize(project.getCurrentSize() + 1);
+            ProjectHome.update(project);
+            EnrollmentHome.create(_enrollment);
+            addInfo(INFO_ENROLLMENT_CREATED, getLocale());
+            addInfo(INFO_PROJECT_UPDATED, getLocale());
             } else {
                 addWarning ( INFO_ENROLLMENT_FAILED, getLocale() );
                 if ( project.getActive() != 1) {

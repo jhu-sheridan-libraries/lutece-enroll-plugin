@@ -22,13 +22,11 @@ import fr.paris.lutece.portal.service.template.AppTemplateService;
 public class EnrollmentXPage extends MVCApplication {
 
   private static final String TEMPLATE_CREATE_ENROLLMENT="/skin/plugins/enroll/create_enrollment.html";
-  private static final String TEMPLATE_ENROLLMENT_RESULT="skin/plugins/enroll/enrollment_result.html";
+  private static final String TEMPLATE_ENROLLMENT_RESULT="/skin/plugins/enroll/enrollment_result.html";
+  private static final String TEMPLATE_PROJECT_STATUS="/skin/plugins/enroll/project_status.html";
 
   // Parameters
-  private static final String MARK_ENROLLMENT = "enrollment";
   private static final String MARK_LIST_PROJECTS = "refListProjects";
-
-  private static final String VIEW_CREATE_ENROLLMENT = "createEnrollment";
   private static final String ACTION_CREATE_ENROLLMENT = "createEnrollment";
 
 
@@ -36,27 +34,31 @@ public class EnrollmentXPage extends MVCApplication {
   public XPage doCreateEnrollment( HttpServletRequest request )  {
       Enrollment enrollment = new Enrollment(  );
       populate( enrollment, request );
+      Map<String, Object> model = getModel();
 
       // Check constraints
       if ( !validateBean( enrollment, getLocale( request ) ) )
       {
-          return redirectView( request, VIEW_CREATE_ENROLLMENT );
+          model.put( "invalid", true);
+          return getXPage( TEMPLATE_ENROLLMENT_RESULT, request.getLocale(), model );
       }
-
-      Map<String, Object> model = getModel();
 
       Project project = ProjectHome.findByName( enrollment.getProgram() );
 
       if ( project != null ) {
           if ( project.canAdd() ) {
-                EnrollmentHome.create( enrollment );
-                project.setCurrentSize( project.getCurrentSize() + 1 );
-                ProjectHome.update(project);
-                model.put("success", true);
-            } else {
-                model.put("inactive", project.getActive()==0);
-                model.put( "full", project.atCapacity());
+              project.setCurrentSize( project.getCurrentSize() + 1 );
+              ProjectHome.update(project);
+              EnrollmentHome.create( enrollment );
+              model.put("success", true);
+          } else {
+              model.put("success", false);
+              model.put("inactive", project.getActive()==0);
+              model.put( "full", project.atCapacity());
           }
+      } else {//could not find a project by this name - supplied project is not valid
+          model.put("success", false);
+          model.put("invalid", true);
       }
 
       return getXPage( TEMPLATE_ENROLLMENT_RESULT, request.getLocale(), model );
@@ -71,20 +73,40 @@ public class EnrollmentXPage extends MVCApplication {
    *            The locale
    * @return The HTML content
    */
-  public static String getEnrollmentHtml( HttpServletRequest request, Locale locale )
+  public static String getEnrollmentHtml(HttpServletRequest request, Locale locale)
   {
-      Collection<Project> listProjects = ProjectHome.getProjectsList( );
-      ReferenceList refListProjects = new ReferenceList( );
-      for ( Project project : listProjects )
-      {
-          if (project.canAdd() ) {
-            refListProjects.addItem( project.getId( ), project.getName( ) );
-          }
-      }
-      Map<String, Object> model = new HashMap<>( );
-      model.put( MARK_LIST_PROJECTS, refListProjects );
 
-      HtmlTemplate template = AppTemplateService.getTemplate( TEMPLATE_CREATE_ENROLLMENT, locale, model );
-      return template.getHtml( );
+      Map<String, Object> model = new HashMap<>( );
+      String program = request.getParameter("program");
+
+      if ( program == null || program.isEmpty()) {//no program specified - return select list for project
+          Collection<Project> listProjects = ProjectHome.getProjectsList();
+          ReferenceList refListProjects = new ReferenceList();
+          for (Project project : listProjects) {
+              if (project.canAdd()) {
+                  refListProjects.addItem(project.getId(), project.getName());
+              }
+          }
+          model.put(MARK_LIST_PROJECTS, refListProjects);
+          HtmlTemplate template = AppTemplateService.getTemplate(TEMPLATE_CREATE_ENROLLMENT, locale, model);
+          return template.getHtml();
+      }else {//program specified; return form if it can add, else return information about project
+          Project project = ProjectHome.findByName(program);
+          if (project != null && project.canAdd()) {
+              model.put("program", program);
+              HtmlTemplate template = AppTemplateService.getTemplate(TEMPLATE_CREATE_ENROLLMENT, locale, model);
+              return template.getHtml();
+          } else {
+              if (project == null ) {
+                  model.put("invalid", true);
+              } else {
+                  model.put("inactive", project.getActive() == 0);
+                  model.put("full", project.atCapacity());
+              }
+              HtmlTemplate template = AppTemplateService.getTemplate(TEMPLATE_PROJECT_STATUS, locale, model);
+              return template.getHtml();
+          }
+
+      }
   }
 }
